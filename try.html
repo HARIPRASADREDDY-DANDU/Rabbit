@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            /* height: 100vh; */
+        }
+
+        .anim {
+            flex: 0 0 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1em;
+        }
+
+        #textContainer {
+            text-align: center;
+        }
+
+        .visible {
+            display: flex;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .content {
+            flex: 0 0 50%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1em;
+        }
+
+        .btns {
+            text-align: center;
+        }
+
+        .bt {
+            display: inline-block;
+        }
+
+        .speak {
+            margin: 0;
+        }
+        .current-word {
+            background-color: yellow;
+        }
+
+        #predefined-text {
+            background-color: lightgray;
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 1em;
+                height: 100%;
+            }
+
+            .anim,
+            .content {
+                flex: 1 0 auto;
+                width: 100%;
+                max-width: none;
+                margin-bottom: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="main">
+        <section class="anim">
+            <section id="textContainer">
+                <div id="text1" class="visible"><img src="https://i.pinimg.com/originals/ec/0d/5f/ec0d5f135cd6ce5a9bfc1d0e756e1339.gif" alt="GIF1" width="500px" height="432x"></div>
+                <div id="text2" class="hidden"><img src="https://i.pinimg.com/originals/bf/df/c8/bfdfc87663635e493481be303c89d6ce.gif" alt="GIF2" width="500px" height="432px"></div>
+                <!-- <div id="text3" class="hidden">End</div> -->
+            </section>
+        </section>
+        <section class="content">
+            <p id="predefined-text">
+                "The Tortoise and the Hare," also known as "The Tortoise and the Rabbit." It's a well-known fable that teaches a moral lesson about the value of persistence and consistency. The story goes like this:
+                Once upon a time, there was a speedy rabbit who was very proud of his speed. He would boast about how fast he could run and challenge other animals to races. One day, he noticed a slow and steady tortoise nearby. The rabbit laughed at the tortoise, thinking it would be impossible for such a slow creature to win a race against him.
+                The tortoise, however, remained calm and politely accepted the rabbit's challenge. The race was set, and the animals gathered to watch. When the race began, the rabbit quickly dashed ahead, leaving the tortoise far behind. Confident in his speed, the rabbit decided to take a nap under a tree, thinking he would easily catch up and win the race later.
+                Meanwhile, the tortoise continued plodding along slowly and steadily without stopping. He was determined to finish the race, regardless of his slow pace. As the rabbit slept, the tortoise made slow but steady progress, inching closer and closer to the finish line.
+                When the rabbit woke up and saw the tortoise nearing the end, he panicked and started running as fast as he could. However, it was too late. The tortoise crossed the finish line before the rabbit could catch up. The slow and steady tortoise had won the race.
+                The moral of the story is that "slow and steady wins the race." It teaches us that consistency, determination, and perseverance can lead to success, even if we may not have the natural advantages or talents of others.
+            </p>
+        </section>
+    </section>
+    <section class="btns">
+        <section class="bt">
+            <button id="text-to-speech-button"><p class="speak">Speech</p></button>
+            <button id="stop-button"><p class="speak">Stop</p></button>
+        </section>
+    </section>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        var button = document.getElementById('text-to-speech-button');
+        var stopButton = document.getElementById('stop-button');
+        var container = document.querySelector('.text-container');
+        var paragraph = document.getElementById('predefined-text');
+        var predefinedText = paragraph.textContent;
+        var words = predefinedText.split(' ');
+        var currentIndex = 0;
+        var utterance = null;
+
+        button.addEventListener('click', function() {
+            speak(predefinedText);
+        });
+
+        stopButton.addEventListener('click', function() {
+            stopSpeaking();
+        });
+
+        function speak(text) {
+            var speechSynthesis = window.speechSynthesis;
+            utterance = new SpeechSynthesisUtterance(text);
+
+            utterance.addEventListener('boundary', function(event) {
+            if (event.name === 'word') {
+                var wordIndex = event.charIndex;
+                currentIndex = getCurrentWordIndex(wordIndex, words);
+
+                var highlightedText = words
+                .map(function(word, index) {
+                    if (index === currentIndex) {
+                    return '<span class="current-word">' + word + '</span>';
+                    } else {
+                    return word;
+                    }
+                })
+                .join(' ');
+
+                paragraph.innerHTML = highlightedText;
+
+                var currentWordElement = document.querySelector('.current-word');
+                if (currentWordElement) {
+                container.scrollTop = currentWordElement.offsetTop - container.offsetTop;
+                }
+            }
+            });
+
+            utterance.addEventListener('end', function() {
+            paragraph.innerHTML = predefinedText;
+            currentIndex = 0;
+            container.scrollTop = 0;
+            });
+
+            speechSynthesis.speak(utterance);
+        }
+
+        function stopSpeaking() {
+            if (utterance) {
+            var speechSynthesis = window.speechSynthesis;
+            speechSynthesis.cancel();
+            }
+        }
+
+        function getCurrentWordIndex(charIndex, words) {
+            var currentWordIndex = 0;
+            var currentCharCount = 0;
+
+            for (var i = 0; i < words.length; i++) {
+            var word = words[i];
+            var wordLength = word.length;
+
+            if (charIndex >= currentCharCount && charIndex < currentCharCount + wordLength) {
+                currentWordIndex = i;
+                break;
+            }
+
+            currentCharCount += wordLength + 1;
+            }
+
+            return currentWordIndex;
+        }
+
+        speak(predefinedText);
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            var textContainer = document.getElementById('textContainer');
+            var texts = textContainer.children;
+            var currentIndex = 0;
+            var loopDuration = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+            function showNextText() {
+                if (currentIndex < texts.length - 1) {
+                    texts[currentIndex].classList.remove('visible');
+                    texts[currentIndex].classList.add('hidden');
+
+                    currentIndex++;
+
+                    texts[currentIndex].classList.remove('hidden');
+                    texts[currentIndex].classList.add('visible');
+
+                    setTimeout(showNextText, 3000); // Delay before showing the next text
+                } else {
+                    // Reset to the first text after reaching the last text
+                    texts[currentIndex].classList.remove('visible');
+                    texts[currentIndex].classList.add('hidden');
+
+                    currentIndex = 0;
+
+                    texts[currentIndex].classList.remove('hidden');
+                    texts[currentIndex].classList.add('visible');
+
+                    setTimeout(showNextText, 3000); // Delay before showing the next text
+                }
+            }
+
+            setTimeout(showNextText, 3000); // Initial delay before showing the first text
+            setTimeout(function() {
+                location.reload(); // Reload the page after the loop duration to start over
+            }, loopDuration);
+        });
+    </script>
+</body>
+</html>
